@@ -1,4 +1,4 @@
-# Dr.Flora 🌱
+# Dr.Flora 🌿
 
 **An AI-powered chatbot assistant for identifying plant diseases and providing care advice.**
 
@@ -9,9 +9,14 @@ Dr.Flora is a full-stack application designed to help gardeners and farmers diag
 ## ✨ Key Features
 
 * **Image-Based Diagnosis:** Upload photos of plant leaves for instant analysis.
-* **Deep Learning Classification:** accurately identifies plant diseases using transfer learning with state-of-the-art convolutional neural networks.
+* **Deep Learning Classification:** Accurately identifies plant diseases using transfer learning with state-of-the-art convolutional neural networks.
 * **AI-Powered Advice:** Generates context-aware treatment plans and answers follow-up questions using OpenAI.
-* **Contextual Guardrails:** Uses LangChain to ensure the chatbot remains focused purely on botanical and agricultural topics, filtering out irrelevant queries.
+* **Contextual Guardrails & General Q&A:** Uses LangChain to ensure the chatbot remains focused on botanical and agricultural topics. While it filters out unrelated subjects (e.g., sports, politics), it **is capable of answering general relevant inquiries** about plant care, fertilizers, and seasons, even if they are not strictly about the uploaded image.
+
+## ⚠️ Limitations & Known Issues
+
+* **Stateless Image Processing:** The application currently does not maintain the state of the uploaded image across the conversation. Once the initial diagnosis is delivered, the vision context is lost. If you ask a visual follow-up question (e.g., "Look at the corner of the leaf again"), the bot will not be able to "see" the image a second time without a re-upload. It relies purely on the text history stored in the database for follow-up conversation.
+* **Hallucination Risk:** As with all LLMs, the chatbot may occasionally generate plausible-sounding but incorrect agricultural advice. It is recommended to verify critical farming decisions with professional experts.
 
 ## 🛠️ Tech Stack
 
@@ -25,10 +30,10 @@ Dr.Flora combines several advanced technologies to create a seamless experience:
 
 ### LLM & Chat Pipeline
 * **LLM Provider:** OpenAI API (e.g., gpt-3.5-turbo or gpt-4).
-* **Orchestration:** LangChain. Used to dynamically generate prompts based on the vision model's output and to enforce "context filtering" so the bot stays in character as a plant doctor.
+* **Orchestration:** LangChain. Used to dynamically generate prompts based on the vision model's output and to enforce context filtering.
 
 ### Full-Stack Web Application
-* **Frontend:** React.js for a dynamic user interface, styled with Bootstrap.
+* **Frontend:** React.js for a dynamic user interface, styled with Bootstrap for responsiveness.
 * **Backend:** Django (Python) serving as the API server, handling image uploads and connecting the frontend to the ML pipeline.
 * **Database:** MongoDB (NoSQL) used to store chat histories, user sessions, and disease metadata.
 
@@ -38,8 +43,8 @@ Dr.Flora combines several advanced technologies to create a seamless experience:
 2.  **Backend Processing:** The Django backend receives the image.
 3.  **Pre-processing:** OpenCV prepares the image for the model (resizing, color conversion).
 4.  **Prediction:** The TensorFlow/Keras model (ResNet152V2) analyzes the image and outputs a predicted disease label (e.g., "Tomato_Early_Blight").
-5.  **Prompt Engineering:** Django passes this label to LangChain. LangChain constructs a specific prompt, such as: *"The user's plant has been identified as having [Tomato Early Blight]. Provide a concise treatment plan for this condition. Do not talk about anything unrelated to plants."*
-6.  **LLM Response:** This prompt is sent to the OpenAI API.
+5.  **Prompt Engineering:** Django passes this label to LangChain. LangChain constructs a specific prompt.
+6.  **LLM Response:** This prompt is sent to the OpenAI API to generate a cure/advice summary.
 7.  **Delivery:** The AI's advice is saved to MongoDB and displayed back to the user in the chat window.
 
 ## ⚙️ Prerequisites for Running Locally
