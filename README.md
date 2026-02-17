@@ -16,7 +16,6 @@ Dr.Flora is a full-stack application designed to help gardeners and farmers diag
 ## ⚠️ Limitations & Known Issues
 
 * **Stateless Image Processing:** The application currently does not maintain the state of the uploaded image across the conversation. Once the initial diagnosis is delivered, the vision context is lost. If you ask a visual follow-up question (e.g., "Look at the corner of the leaf again"), the bot will not be able to "see" the image a second time without a re-upload. It relies purely on the text history stored in the database for follow-up conversation.
-* **Hallucination Risk:** As with all LLMs, the chatbot may occasionally generate plausible-sounding but incorrect agricultural advice. It is recommended to verify critical farming decisions with professional experts.
 
 ## 🛠️ Tech Stack
 
