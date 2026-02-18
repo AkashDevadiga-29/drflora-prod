@@ -27,6 +27,9 @@ SECRET_KEY = 'django-insecure-t(pg%+a-&2q96=&pv%8nw%-9s=bi-!kt%)!kfua=^i!^r0%23w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+MONGO_CLIENT = "mongodb://localhost:27017/"
+MONGO__DB = "drflora"
+
 ALLOWED_HOSTS = []
 
 CORS_ALLOW_CREDENTIALS = True

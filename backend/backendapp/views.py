@@ -1,18 +1,18 @@
 from datetime import datetime
 import json
+from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework import status, generics, views
-from rest_framework.views import APIView
+from rest_framework import status, generics
+from django.conf import settings
 from .serializers import RegisterSerializer, DeleteAccountSerializer, User, UserSerializer, ResetPasswordRequestSerializer, SetNewPasswordSerializer, ChangePasswordSerializer
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import force_bytes, force_str, smart_bytes, smart_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import smart_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.core.mail import send_mail
-
+import dotenv
 from rest_framework_simplejwt.views import (
     TokenObtainPairView, TokenRefreshView
 )
@@ -21,6 +21,10 @@ from pymongo import MongoClient
 import numpy as np
 import cv2
 from .mymodels import plantmodel, CLASS_NAMES
+import os
+
+dotenv.load_dotenv()
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -102,8 +106,8 @@ def get_user(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_chat_report(request, session_id):
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client['drflora']
+    client = MongoClient(settings.MONGO_CLIENT)
+    db = client[settings.MONGO__DB]
     
     session_meta = db.sessions.find_one({"session_id": session_id, "user_id": request.user.id})
     if not session_meta:
@@ -162,8 +166,8 @@ def chat_with_dr_flora(request):
                 user_query = user_message if user_message else f"What are the treatments and prevention steps for my plant ({display_name}). (Confidence: {confidence:.2f}%)?"
 
             bot_response = chatbot_manager.call_chatbot(user_query, session_id, disease_name=display_name)
-            client = MongoClient("mongodb://localhost:27017/")
-            db = client['drflora']
+            client = MongoClient(settings.MONGO_CLIENT)
+            db = client[settings.MONGO__DB]
             if not db.sessions.find_one({"session_id": session_id}):
                 summary_prompt = f"Summarize this gardening query into a single 3-word title: {user_query}"
                 raw_title = chatbot_manager.llm.invoke(summary_prompt).content
@@ -187,8 +191,8 @@ def chat_with_dr_flora(request):
         else:
             bot_response = chatbot_manager.call_chatbot(user_message, session_id)
             
-            client = MongoClient("mongodb://localhost:27017/")
-            db = client['drflora']
+            client = MongoClient(settings.MONGO_CLIENT)
+            db = client[settings.MONGO__DB]
             if not db.sessions.find_one({"session_id": session_id}):
                 summary_prompt = f"Summarize this gardening query into a single 3-word title: {user_message}"
                 raw_title = chatbot_manager.llm.invoke(summary_prompt).content
@@ -211,8 +215,8 @@ def chat_with_dr_flora(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_sessions(request):
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client['drflora']
+    client = MongoClient(settings.MONGO_CLIENT)
+    db = client[settings.MONGO__DB]
 
     cursor = db.sessions.find({"user_id": request.user.id}).sort("_id", -1)
     
@@ -228,8 +232,8 @@ def get_user_sessions(request):
 
 @api_view(['GET'])
 def get_chat_history(request, session_id):
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client['drflora']
+    client = MongoClient(settings.MONGO_CLIENT)
+    db = client[settings.MONGO__DB]
     collection = db['chathistory']
     
     cursor = collection.find({"SessionId": session_id}).sort("_id", 1)
@@ -260,8 +264,8 @@ def get_chat_history(request, session_id):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_session(request, session_id):
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client['drflora']
+    client = MongoClient(settings.MONGO_CLIENT)
+    db = client[settings.MONGO__DB]
     
     session_meta = db.sessions.find_one({"session_id": session_id, "user_id": request.user.id})
     
@@ -284,7 +288,7 @@ class RequestPasswordResetEmail(generics.GenericAPIView):
             uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
 
-            reset_link = f"http://localhost:3000/confirm-reset-password/{uidb64}/{token}"
+            reset_link = f"{FRONTEND_URL}{uidb64}/{token}"
             
             send_mail(
                 'Password Reset Request',
@@ -339,8 +343,8 @@ class DeleteUserView(generics.GenericAPIView):
 
         try:
             
-            client = MongoClient("mongodb://localhost:27017/")
-            db = client['drflora']
+            client = MongoClient(settings.MONGO_CLIENT)
+            db = client[settings.MONGO__DB]
             
             db.sessions.delete_many({"user_id": user.id})
             db.chathistory.delete_many({"SessionId": {"$in": [s['session_id'] for s in db.sessions.find({"user_id": user.id})]}})
